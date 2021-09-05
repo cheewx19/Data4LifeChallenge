@@ -1,6 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HotTableModule } from '@handsontable/angular';
+import { FormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -14,7 +15,8 @@ import { PatientAppointmentsComponent } from '../components/patient-appointments
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HotTableModule
+    HotTableModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
