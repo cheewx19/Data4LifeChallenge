@@ -22,27 +22,11 @@ export class PatientAppointmentsComponent implements OnInit {
   patient_selected: Patient = this.patients[0];
   doctor_selected: Doctor = this.doctors[0];
   datetime_selected: string = "";
+  appointment_selected: string = "";
   latestid: number = 0;
   constructor(private http: HttpClient) { }
 
   async ngOnInit(): Promise<void> {
-    //For initializing database
-    // this.appointment_data.forEach(data=> {
-    //   var appointment: Appointment = {
-    //     doctor_id: data.doctor_id,
-    //     doctor_name: data.doctor_name,
-    //     patient_id: data.patient_id,
-    //     patient_name: data.patient_name,
-    //     patient_age: data.patient_age,
-    //     patient_gender: data.patient_gender,
-    //     appointment_id: data.appointment_id,
-    //     appointment_datetime: this.formatDate(data.appointment_datetime)
-    //   }
-    //   console.log(appointment);
-    //   this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
-    //     console.log(res);
-    //   })
-    // })
     await this.getAppointments();
     this.patient_selected = this.patients[0];
     this.doctor_selected = this.doctors[0];
@@ -66,6 +50,10 @@ export class PatientAppointmentsComponent implements OnInit {
   selectDoctor(e): void {
     console.log(e)
     this.doctor_selected = this.doctors.filter(x => x.doctor_id == e)[0]
+  }
+
+  selectAppointment(e): void {
+    this.appointment_selected = e;
   }
 
   getLatestId(): Promise<void> {
@@ -97,7 +85,7 @@ export class PatientAppointmentsComponent implements OnInit {
       patient_age: this.patient_selected.patient_age,
       patient_gender: this.patient_selected.patient_gender,
       appointment_id: "A" + id.toString(),
-      appointment_datetime: this.formatDate(this.datetime_selected)
+      appointment_datetime: this.datetime_selected
     }
     if (!this.checkDoctorAvailable(appointment.doctor_id, appointment.appointment_datetime) ||
       !this.checkPatientAvailable(appointment.patient_id, appointment.appointment_datetime)) {
@@ -113,12 +101,14 @@ export class PatientAppointmentsComponent implements OnInit {
 
   checkDoctorAvailable(id, date): Boolean {
     var result = true;
+    var proposed = this.formatDate(date);
     this.appointments.filter(x => x.doctor_id == id).forEach(data => {
-      if (new Date(data.appointment_datetime.toString()).toString() == date.toString()) {
+      var current = this.formatDate(data.appointment_datetime)
+      if (current.toString() == proposed.toString()) {
         result = false;
       }
     })
-    var hour = new Date(date.toString()).getHours();
+    var hour = proposed.getHours();
     if (hour < 8 || hour >= 16)
       result = false;
     return result;
@@ -126,14 +116,23 @@ export class PatientAppointmentsComponent implements OnInit {
 
   checkPatientAvailable(id, date): Boolean {
     var result = true
+    var proposed = this.formatDate(date);
     this.appointments.filter(x => x.patient_id == id).forEach(data => {
-      if (new Date(data.appointment_datetime.toString()).toString() == date.toString()) {
+      var current = this.formatDate(data.appointment_datetime)
+      if (current.toString() == proposed.toString()) {
         result = false;
       }
     })
-    var hour = new Date(date.toString()).getHours();
+    var hour = proposed.getHours();
     if (hour < 8 || hour >= 16)
       result = false;
     return result;
+  }
+
+  deleteAppointment(): void {
+    this.http.delete('http://localhost:5000/api/appointment/' + this.appointment_selected).subscribe(res => {
+        console.log(res);
+        alert("Deleted Successfully!")
+      })
   }
 }
