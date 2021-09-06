@@ -1,9 +1,8 @@
 <link rel="stylesheet" href="http://handsontable.com/dist/jquery.handsontable.full.css">
-
+<div>
 <h1>Appointment System</h1>
 <div>
 <h2>Patient Appointments</h2>
-
 <hot-table [colHeaders]="true" [data]="appointments" dropdownMenu="true" filters="true"
   licenseKey="non-commercial-and-evaluation">
   <hot-column data="doctor_id" title="Doctor Id"></hot-column>
@@ -58,5 +57,7 @@
 
 <label>Date and Time</label>
 <input class="form-control" [(ngModel)]="datetime_selected" />
-
+<br>
+<button class="btn btn-primary" (click)="getLatestId()">Add</button>
+</div>
 </div>
