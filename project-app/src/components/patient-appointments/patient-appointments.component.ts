@@ -19,23 +19,31 @@ export class PatientAppointmentsComponent implements OnInit {
   public appointments: Appointment[] = [];
   public doctors: Doctor[] = doctor_data;
   public patients: Patient[] = patient_data;
-  patient_selected: Patient;
-  doctor_selected: Doctor;
+  patient_selected: Patient = this.patients[0];
+  doctor_selected: Doctor = this.doctors[0];
   datetime_selected: string = "";
   latestid: number = 0;
-  loading = true;
   constructor(private http: HttpClient) { }
 
   async ngOnInit(): Promise<void> {
-    // For initializing database
-    // this.appointments.forEach(data=> {
-    //   this.http.post<Appointment>('http://localhost:5000/api/appointment', data).subscribe(res => {
+    //For initializing database
+    // this.appointment_data.forEach(data=> {
+    //   var appointment: Appointment = {
+    //     doctor_id: data.doctor_id,
+    //     doctor_name: data.doctor_name,
+    //     patient_id: data.patient_id,
+    //     patient_name: data.patient_name,
+    //     patient_age: data.patient_age,
+    //     patient_gender: data.patient_gender,
+    //     appointment_id: data.appointment_id,
+    //     appointment_datetime: this.formatDate(data.appointment_datetime)
+    //   }
+    //   console.log(appointment);
+    //   this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
     //     console.log(res);
     //   })
     // })
     await this.getAppointments();
-    console.log(this.appointments);
-    this.loading = false;
     this.patient_selected = this.patients[0];
     this.doctor_selected = this.doctors[0];
   }
@@ -48,7 +56,7 @@ export class PatientAppointmentsComponent implements OnInit {
         resolve();
       })
     });
-    
+
   }
 
   selectPatient(e): void {
@@ -66,12 +74,21 @@ export class PatientAppointmentsComponent implements OnInit {
         this.latestid = res;
         resolve();
       })
-    });
+    })
+  }
+
+  formatDate(date): Date {
+    var day = date.substring(0, 2);
+    var month = date.substring(2, 4);
+    var year = date.substring(4, 8);
+    var time = date.substring(9);
+    return new Date(month + "/" + day + "/" + year + " " + time);
   }
 
   async addAppointment(): Promise<void> {
     await this.getLatestId();
     var id = this.latestid + 1;
+
     var appointment: Appointment = {
       doctor_id: this.doctor_selected.doctor_id,
       doctor_name: this.doctor_selected.doctor_name,
@@ -80,8 +97,43 @@ export class PatientAppointmentsComponent implements OnInit {
       patient_age: this.patient_selected.patient_age,
       patient_gender: this.patient_selected.patient_gender,
       appointment_id: "A" + id.toString(),
-      appointment_datetime: this.datetime_selected
+      appointment_datetime: this.formatDate(this.datetime_selected)
     }
-    this.appointments.push(appointment);
+    if (!this.checkDoctorAvailable(appointment.doctor_id, appointment.appointment_datetime) ||
+      !this.checkPatientAvailable(appointment.patient_id, appointment.appointment_datetime)) {
+      alert("Doctor or Patient not available at this date and time");
+    }
+    else {
+      this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
+        console.log(res);
+        alert("Inserted Successfully!")
+      })
+    }
+  }
+
+  checkDoctorAvailable(id, date): Boolean {
+    var result = true;
+    this.appointments.filter(x => x.doctor_id == id).forEach(data => {
+      if (new Date(data.appointment_datetime.toString()).toString() == date.toString()) {
+        result = false;
+      }
+    })
+    var hour = new Date(date.toString()).getHours();
+    if (hour < 8 || hour >= 16)
+      result = false;
+    return result;
+  }
+
+  checkPatientAvailable(id, date): Boolean {
+    var result = true
+    this.appointments.filter(x => x.patient_id == id).forEach(data => {
+      if (new Date(data.appointment_datetime.toString()).toString() == date.toString()) {
+        result = false;
+      }
+    })
+    var hour = new Date(date.toString()).getHours();
+    if (hour < 8 || hour >= 16)
+      result = false;
+    return result;
   }
 }

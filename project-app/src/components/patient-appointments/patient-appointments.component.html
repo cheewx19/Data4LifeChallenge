@@ -1,7 +1,7 @@
 <link rel="stylesheet" href="http://handsontable.com/dist/jquery.handsontable.full.css">
 <div>
 <h1>Appointment System</h1>
-<div>
+
 <h2>Patient Appointments</h2>
 <hot-table [colHeaders]="true" [data]="appointments" dropdownMenu="true" filters="true"
   licenseKey="non-commercial-and-evaluation">
@@ -14,20 +14,6 @@
   <hot-column data="appointment_id" title="Appointment Id"></hot-column>
   <hot-column data="appointment_datetime" title="Appointment DateTime"></hot-column>
 </hot-table>
-
-<h2>Patients</h2>
-<hot-table [colHeaders]="true" [data]="patients" dropdownMenu="true" filters="true" licenseKey="non-commercial-and-evaluation">
-  <hot-column data="patient_id" title="Patient Id"></hot-column>
-  <hot-column data="patient_name" title="Patient Name"></hot-column>
-  <hot-column data="patient_age" title="Patient Age"></hot-column>
-  <hot-column data="patient_gender" title="Patient Gender"></hot-column>
-</hot-table>
-<h2>Doctors</h2>
-<hot-table [colHeaders]="true" [data]="doctors" dropdownMenu="true" filters="true" licenseKey="non-commercial-and-evaluation">
-  <hot-column data="doctor_id" title="Doctor Id"></hot-column>
-  <hot-column data="doctor_name" title="Doctor Name"></hot-column>
-</hot-table>
-</div>
 <br>
 <h3>Fix an Appointment</h3>
 <label>Patient ID</label>
@@ -58,6 +44,6 @@
 <label>Date and Time</label>
 <input class="form-control" [(ngModel)]="datetime_selected" />
 <br>
-<button class="btn btn-primary" (click)="getLatestId()">Add</button>
+<button class="btn btn-primary" (click)="addAppointment()">Add</button>
 </div>
 </div>

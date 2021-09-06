@@ -38,4 +38,24 @@ recordRoutes.route("/api/appointment/getMaxId").get(function (req, res) {
     })
 });
 
+// get Appointments by doctor
+recordRoutes.route("/api/appointment/doctor/:id").get(function (req, res) {
+    var db = dbo.getDB();
+
+    db.collection("Appointments")
+    .find({doctor_id: req.params.id}).toArray(function(err, result) {
+        res.status(200).json(result);
+    })
+});
+
+// get Appointments by patient
+recordRoutes.route("/api/appointment/patient/:id").get(function (req, res) {
+    var db = dbo.getDB();
+
+    db.collection("Appointments")
+    .find({patient_id: req.params.id}).toArray(function(err, result) {
+        res.status(200).json(result);
+    })
+});
+
 module.exports = recordRoutes;

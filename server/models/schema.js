@@ -7,11 +7,11 @@ let Appointment = new Schema({
         required: true
     },
     doctor_name: {
-        type: Date,
+        type: String,
         required: true
     },
     patient_id: {
-        type: Date,
+        type: String,
         required: true
     },
     patient_name: {
@@ -23,13 +23,16 @@ let Appointment = new Schema({
         required: true
     },
     patient_gender: {
-        type: String
+        type: String,
+        required: true
     },
     appointment_id: {
-        type: String
+        type: String,
+        required: true
     },
     appointment_datetime: {
-        type: Array
+        type: Date,
+        required: true
     }
 });
 module.exports = mongoose.model('Appointment', Appointment);

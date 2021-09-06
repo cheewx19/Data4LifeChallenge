@@ -6,5 +6,5 @@ export class Appointment {
     patient_age: number;
     patient_gender: string;
     appointment_id: string;
-    appointment_datetime: string;
+    appointment_datetime: Date;
 }
