@@ -73,6 +73,12 @@ export class PatientAppointmentsComponent implements OnInit {
     return new Date(month + "/" + day + "/" + year + " " + time);
   }
 
+  clearfields() {
+    this.doctor_selected = this.doctors[0];
+    this.patient_selected = this.patients[0];
+    this.datetime_selected = "";
+  }
+
   async addAppointment(): Promise<void> {
     if (this.datetime_selected == "") {
       alert("Please fill in the DateTime");
@@ -101,6 +107,7 @@ export class PatientAppointmentsComponent implements OnInit {
         console.log(res);
         alert("Inserted Successfully!")
         this.getAppointments();
+        this.clearfields();
       })
     }
   }
