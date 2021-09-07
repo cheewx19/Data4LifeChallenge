@@ -63,7 +63,7 @@ recordRoutes.route("/api/appointment/:id").delete(function (req, res) {
     var db = dbo.getDB();
 
     db.collection("Appointments")
-    deleteOne(req.params.id, function (err, obj) {
+    .deleteOne({appointment_id: req.params.id}, function (err, obj) {
         res.status(200).json(req.params.id);
       });
 });

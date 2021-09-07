@@ -47,12 +47,12 @@ export class PatientAppointmentsComponent implements OnInit {
     await this.getAppointments();
     this.patient_selected = this.patients[0];
     this.doctor_selected = this.doctors[0];
+    this.appointment_selected = this.appointments[0].appointment_id;
   }
 
   getAppointments(): Promise<void> {
     return new Promise(resolve => {
       this.http.get<Appointment>('http://localhost:5000/api/appointment').subscribe(res => {
-        console.log(res);
         this.appointments = Object.assign(res);
         resolve();
       })
@@ -65,7 +65,6 @@ export class PatientAppointmentsComponent implements OnInit {
   }
 
   selectDoctor(e): void {
-    console.log(e)
     this.doctor_selected = this.doctors.filter(x => x.doctor_id == e)[0]
   }
 
@@ -90,12 +89,18 @@ export class PatientAppointmentsComponent implements OnInit {
     return new Date(month + "/" + day + "/" + year + " " + time);
   }
 
+  clearfields() {
+    this.datetime_selected = "";
+    this.doctor_selected = this.doctors[0];
+    this.patient_selected = this.patients[0];
+  }
+
   async addAppointment(): Promise<void> {
     if (this.datetime_selected == "") {
       alert("Please fill in the DateTime");
       return;
     }
-    
+
     await this.getLatestId();
     var id = this.latestid + 1;
 
@@ -115,9 +120,9 @@ export class PatientAppointmentsComponent implements OnInit {
     }
     else {
       this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
-        console.log(res);
         alert("Inserted Successfully!")
         this.getAppointments();
+        this.clearfields();
       })
     }
   }
@@ -150,7 +155,6 @@ export class PatientAppointmentsComponent implements OnInit {
 
   deleteAppointment(): void {
     this.http.delete('http://localhost:5000/api/appointment/' + this.appointment_selected).subscribe(res => {
-        console.log(res);
         alert("Deleted Successfully!")
         this.getAppointments();
       })
