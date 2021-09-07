@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { Appointment } from '../../models/Appointment';
 import { Doctor } from '../../models/Doctor';
 import { Patient } from '../../models/Patient';
-import { appointment_data, doctor_data, patient_data } from "../../models/data";
+import { doctor_data, patient_data } from "../../models/data";
 import { ResolveEnd } from '@angular/router';
 
 @Component({
@@ -15,7 +15,6 @@ import { ResolveEnd } from '@angular/router';
   styleUrls: ['./patient-appointments.component.scss']
 })
 export class PatientAppointmentsComponent implements OnInit {
-  appointment_data = appointment_data;
   public appointments: Appointment[] = [];
   public doctors: Doctor[] = doctor_data;
   public patients: Patient[] = patient_data;
@@ -37,6 +36,7 @@ export class PatientAppointmentsComponent implements OnInit {
       this.http.get<Appointment>('http://localhost:5000/api/appointment').subscribe(res => {
         console.log(res);
         this.appointments = Object.assign(res);
+        this.appointment_selected = this.appointments[0].appointment_id;
         resolve();
       })
     });
@@ -74,6 +74,11 @@ export class PatientAppointmentsComponent implements OnInit {
   }
 
   async addAppointment(): Promise<void> {
+    if (this.datetime_selected == "") {
+      alert("Please fill in the DateTime");
+      return;
+    }
+    
     await this.getLatestId();
     var id = this.latestid + 1;
 
@@ -95,6 +100,7 @@ export class PatientAppointmentsComponent implements OnInit {
       this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
         console.log(res);
         alert("Inserted Successfully!")
+        this.getAppointments();
       })
     }
   }
@@ -132,7 +138,9 @@ export class PatientAppointmentsComponent implements OnInit {
   deleteAppointment(): void {
     this.http.delete('http://localhost:5000/api/appointment/' + this.appointment_selected).subscribe(res => {
         console.log(res);
+        this.getAppointments();
         alert("Deleted Successfully!")
       })
+
   }
 }

@@ -19,7 +19,7 @@ recordRoutes.post("/api/appointment", function(req, res) {
 });
 
 recordRoutes.delete("/api/appointment/:id", function(req, res) {
-    var index = appointments.findIndex(x=> x.appointment_id = req.params.id)
+    var index = appointments.findIndex(x=> x.appointment_id == req.params.id)
     appointments.splice(index, 1);
     res.send(appointments);
 });
