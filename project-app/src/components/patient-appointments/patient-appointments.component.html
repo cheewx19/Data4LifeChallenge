@@ -47,3 +47,16 @@
 <button class="btn btn-primary" (click)="addAppointment()">Add</button>
 </div>
 </div>
+
+<h3>Delete an Appointment</h3>
+<label>Appointment ID</label>
+<div>
+<select class="form-select" #myAppSelect (change)="selectAppointment(myAppSelect.value)">
+  <option *ngFor="let app of appointments" [value]="app.appointment_id">
+    {{app.appointment_id}}
+  </option>
+</select>
+<br>
+<button class="btn btn-primary" (click)="deleteAppointment()">Delete</button>
+</div>
+<div>

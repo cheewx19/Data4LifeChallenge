@@ -58,4 +58,14 @@ recordRoutes.route("/api/appointment/patient/:id").get(function (req, res) {
     })
 });
 
+// get latest appointment id
+recordRoutes.route("/api/appointment/:id").delete(function (req, res) {
+    var db = dbo.getDB();
+
+    db.collection("Appointments")
+    deleteOne(req.params.id, function (err, obj) {
+        res.status(200).json(req.params.id);
+      });
+});
+
 module.exports = recordRoutes;

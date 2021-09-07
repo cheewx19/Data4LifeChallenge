@@ -22,6 +22,7 @@ export class PatientAppointmentsComponent implements OnInit {
   patient_selected: Patient = this.patients[0];
   doctor_selected: Doctor = this.doctors[0];
   datetime_selected: string = "";
+  appointment_selected: string = "";
   latestid: number = 0;
   constructor(private http: HttpClient) { }
 
@@ -68,6 +69,10 @@ export class PatientAppointmentsComponent implements OnInit {
     this.doctor_selected = this.doctors.filter(x => x.doctor_id == e)[0]
   }
 
+  selectAppointment(e): void {
+    this.appointment_selected = e;
+  }
+
   getLatestId(): Promise<void> {
     return new Promise(resolve => {
       this.http.get<number>('http://localhost:5000/api/appointment/getMaxId').subscribe(res => {
@@ -86,6 +91,11 @@ export class PatientAppointmentsComponent implements OnInit {
   }
 
   async addAppointment(): Promise<void> {
+    if (this.datetime_selected == "") {
+      alert("Please fill in the DateTime");
+      return;
+    }
+    
     await this.getLatestId();
     var id = this.latestid + 1;
 
@@ -107,6 +117,7 @@ export class PatientAppointmentsComponent implements OnInit {
       this.http.post<Appointment>('http://localhost:5000/api/appointment', appointment).subscribe(res => {
         console.log(res);
         alert("Inserted Successfully!")
+        this.getAppointments();
       })
     }
   }
@@ -136,4 +147,13 @@ export class PatientAppointmentsComponent implements OnInit {
       result = false;
     return result;
   }
+
+  deleteAppointment(): void {
+    this.http.delete('http://localhost:5000/api/appointment/' + this.appointment_selected).subscribe(res => {
+        console.log(res);
+        alert("Deleted Successfully!")
+        this.getAppointments();
+      })
+  }
+
 }
