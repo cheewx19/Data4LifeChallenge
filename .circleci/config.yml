@@ -1,0 +1,127 @@
+version: 2.1
+
+orbs:
+  slack: circleci/slack@4.12.1
+
+jobs:
+  build_and_test:
+    parallelism: 10
+    resource_class: large
+    working_directory: ~/workspace
+    docker:
+      - image: khteh/circleci-dotnet:latest
+    steps:
+      - checkout
+      - run:
+          name: Setup GitHub credentials
+          command: |
+            cp nuget.config.template nuget.config
+            sed -i 's/GITHUB_USERNAME/'$GITHUB_USERNAME'/g' nuget.config
+            sed -i 's/GITHUB_PASSWORD/'$GITHUB_PASSWORD'/g' nuget.config
+      - run: dotnet restore
+      - run: dotnet build -c Release --no-restore /p:Version=1.0 --version-suffix $CIRCLE_BUILD_NUM
+      - run: dotnet test -c Release --no-restore --no-build test/KyberlifeProduct.IntegrationTests
+      - run: dotnet publish -c Release --no-restore --no-build src/KyberlifeProduct
+      - setup_remote_docker:
+          docker_layer_caching: true
+      # use a primary image that already has Docker (recommended)
+      # or install it during a build like we do here
+      - run:
+          name: Extract FileVersion from published binary
+          command: |
+            exiftool src/KyberlifeProduct/bin/Release/net7.0/publish/KyberlifeProduct.dll | grep "File Version" | awk -F":" '{ print $2 }' | xargs echo -n > version.txt
+      - run:
+          name: Build docker image
+          command: |
+            MAJOR=$(cat version.txt | awk -F"." '{ print $1 }')
+            MINOR=$(cat version.txt | awk -F"." '{ print $2 }')
+            VERSION=$MAJOR.$MINOR.$CIRCLE_BUILD_NUM
+            docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/product:latest -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/product:$VERSION src
+      - run:
+          name: Set Default AWS Region
+          command: aws configure set default.region $AWS_REGION
+      - run:
+          name: Set AWS Access Key
+          command: aws configure set aws_access_key_id $AWS_ACCESS_KEY
+      - run:
+          name: Set AWS Secret Key
+          command: aws configure set aws_secret_access_key $AWS_SECRET_KEY
+      - run:
+          name: Login to ECR
+          command: aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - run:
+          name: Push images to docker hub
+          command: |
+            MAJOR=$(cat version.txt | awk -F"." '{ print $1 }')
+            MINOR=$(cat version.txt | awk -F"." '{ print $2 }')
+            VERSION=$MAJOR.$MINOR.$CIRCLE_BUILD_NUM
+            echo ${VERSION} > docker-build_number.txt
+            docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/product --all-tags
+      - persist_to_workspace:
+          name: Save Workspace
+          root: .
+          paths:
+            - docker-build_number.txt
+  deploy-eks:
+    parallelism: 10
+    resource_class: large
+    working_directory: /tmp
+    docker:
+      - image: khteh/ubuntu:latest
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Use the saved build number here
+          command: |
+            echo 'export CIRCLE_BUILD_NUM_DOCKER="$(cat /tmp/docker-build_number.txt)"' >> $BASH_ENV
+            . $BASH_ENV
+            echo CIRCLE_BUILD_NUM_DOCKER: $CIRCLE_BUILD_NUM_DOCKER
+      - run:
+          name: Set Default AWS Region
+          command: aws configure set default.region $AWS_REGION
+      - run:
+          name: Set AWS Access Key
+          command: aws configure set aws_access_key_id $AWS_ACCESS_KEY
+      - run:
+          name: Set AWS Secret Key
+          command: aws configure set aws_secret_access_key $AWS_SECRET_KEY
+      - run:
+          name: Update Kubectl Configuration with cluster name
+          command: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      - run:
+          name: Update Application
+          command: |
+            kubectl patch statefulset product --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/image", "value":"'$AWS_ACCOUNT_ID'.dkr.ecr.'$AWS_REGION'.amazonaws.com/product:'$CIRCLE_BUILD_NUM_DOCKER'"}]'
+
+  notification:
+    docker:
+      - image: "cimg/base:stable"
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS # context / project UI env-var reference
+    steps:
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: success_tagged_deploy_1
+
+workflows:
+  main:
+    jobs:
+      - build_and_test
+      - deploy-eks:
+          requires:
+            - build_and_test
+          filters:
+            branches:
+              only: master
+      - notification:
+          context: slack-secrets
+          name: KyberlifeProduct
+          requires:
+            - deploy-eks
